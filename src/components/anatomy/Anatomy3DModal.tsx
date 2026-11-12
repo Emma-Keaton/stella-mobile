@@ -8,6 +8,17 @@ import {
   View, Text, TouchableOpacity, SafeAreaView, StatusBar, Dimensions,
   Modal, FlatList, Alert,
 } from 'react-native'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
+import {
+  PanGestureHandler,
+  PinchGestureHandler,
+  TapGestureHandler,
+  State,
+} from 'react-native-gesture-handler'
 
 import { getTheme, type StellaThemeId } from '../../theme/index'
 
@@ -43,6 +54,52 @@ export default function Anatomy3DModal({
   const [destPath, setDestPath] = useState('')
 
   const tokens = getTheme(themeId)
+
+  // ── Gesture State ──
+  const rotX = useSharedValue(0)
+  const rotY = useSharedValue(0)
+  const scale = useSharedValue(1)
+  const panStartX = useRef(0)
+  const panStartY = useRef(0)
+
+  // Rotation from pan (swipe drag)
+  const onPanGestureEvent = ({ nativeEvent }: any) => {
+    rotX.value = withTiming(panStartY.current + nativeEvent.translationY * 0.4)
+    rotY.value = withTiming(panStartX.current + nativeEvent.translationX * 0.4)
+  }
+
+  const onPanGestureStateChange = useCallback(({ nativeEvent }: any) => {
+    if (nativeEvent.oldState === State.ACTIVE) {
+      panStartX.current = rotY.value
+      panStartY.current = rotX.value
+    }
+  }, [])
+
+  // Pinch to zoom
+  const onPinchGestureEvent = Animated.event([
+    { nativeEvent: { scale: scale } },
+  ], [])
+
+  // Tap to select part at touch position
+  const onTapGestureEvent = useCallback(({ nativeEvent }: any) => {
+    // Convert touch position to part selection heuristic
+    const x = nativeEvent.x
+    const y = nativeEvent.y
+    const cx = SCREEN_WIDTH / 2
+    // Simple heuristic: tap left side → previous part, right side → next part
+    if (parts.length > 0) {
+      const idx = selectedPart
+        ? parts.findIndex(p => p.id === selectedPart)
+        : -1
+      let nextIdx: number
+      if (x < cx) {
+        nextIdx = idx > 0 ? idx - 1 : parts.length - 1
+      } else {
+        nextIdx = idx < parts.length - 1 ? idx + 1 : 0
+      }
+      setSelectedPart(parts[nextIdx].id)
+    }
+  }, [parts, selectedPart, SCREEN_WIDTH])
 
   useEffect(() => {
     if (visible && modelData) {
@@ -163,40 +220,60 @@ export default function Anatomy3DModal({
         </TouchableOpacity>
         </View>
 
-        {/* 3D Model Placeholder */}
-        <View style={{
-          flex: 1,
-          backgroundColor: tokens.surface,
-          borderRadius: 16,
-          borderWidth: 1,
-          borderColor: tokens.border,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 16,
-        }}
-        >
-          <View style={{
-            width: 200,
-            height: 200,
-            borderRadius: 100,
-            backgroundColor: tokens.border + '22',
-            borderWidth: 2,
-            borderColor: tokens.border,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          >
-            <Text style={{ color: tokens.primary, fontSize: 32 }}>🧬</Text>
-            <Text style={{ color: tokens['text-secondary'], fontSize: 14, marginTop: 8 }}>
-              3D Model Viewer
-            </Text>
-          </View>
-          <Text style={{ color: tokens['text-muted'], fontSize: 12, marginTop: 12, textAlign: 'center' }}>
-            Rotate: Drag • Pinch: Zoom • Tap Part: Select
-          </Text>
-        </View>
-
-        {/* Parts List */}
+        {/* 3D Model Viewer � Swipe to Rotate, Pinch to Zoom, Tap Part to Select */}
+        <TapGestureHandler onGestureEvent={onTapGestureEvent}>
+          <Animated.View style={{ flex: 1 }}>
+            <PinchGestureHandler onGestureEvent={onPinchGestureEvent}>
+              <Animated.View style={{ flex: 1 }}>
+                <PanGestureHandler
+                  onGestureEvent={onPanGestureEvent}
+                  onHandlerStateChange={onPanGestureStateChange}
+                >
+                  <Animated.View
+                    style={[
+                      {
+                        flex: 1,
+                        backgroundColor: tokens.surface,
+                        borderRadius: 16,
+                        borderWidth: 1,
+                        borderColor: tokens.border,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: 16,
+                      },
+                      useAnimatedStyle(() => ({
+                        transform: [
+                          { rotateX: ""${rotX.value}deg"" },
+                          { rotateY: ""${rotY.value}deg"" },
+                          { scale: scale.value },
+                        ],
+                      })),
+                    ]}
+                  >
+                    <View style={{
+                      width: 200,
+                      height: 200,
+                      borderRadius: 100,
+                      backgroundColor: tokens.border + '22',
+                      borderWidth: 2,
+                      borderColor: tokens.border,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <Text style={{ color: tokens.primary, fontSize: 32 }}>??</Text>
+                      <Text style={{ color: tokens['text-secondary'], fontSize: 14, marginTop: 8 }}>
+                        3D Model Viewer
+                      </Text>
+                    </View>
+                    <Text style={{ color: tokens['text-muted'], fontSize: 12, marginTop: 12, textAlign: 'center' }}>
+                      Swipe: Rotate � Pinch: Zoom � Tap Part: Select
+                    </Text>
+                  </Animated.View>
+                </PanGestureHandler>
+              </Animated.View>
+            </PinchGestureHandler>
+          </Animated.View>
+        </TapGestureHandler>        {/* Parts List */}
         <View style={{ marginBottom: 20 }}>
           <Text style={{ color: tokens['text-primary'], fontSize: 16, fontWeight: '600', marginBottom: 12 }}>
             Model Parts ({parts.length})
@@ -312,3 +389,7 @@ export default function Anatomy3DModal({
     </SafeAreaView>
   )
 }
+
+
+
+
