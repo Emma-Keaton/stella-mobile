@@ -1,0 +1,30 @@
+<resources>
+    <!-- Splash theme: theme-responsive, checks theme state during launch -->
+    <style name="SplashTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_screen</item>
+        <item name="colorPrimary">@color/stella_primary</item>
+        <item name="colorPrimaryDark">@color/stella_background</item>
+        <item name="android:statusBarColor">@color/stella_background</item>
+        <item name="android:navigationBarColor">@color/stella_background</item>
+    </style>
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/stella_primary</item>
+        <item name="colorPrimaryDark">@color/stella_background</item>
+        <item name="colorAccent">@color/stella_secondary</item>
+        <item name="android:windowBackground">@color/stella_background</item>
+        <item name="android:statusBarColor">@color/stella_background</item>
+        <item name="android:navigationBarColor">@color/stella_background</item>
+    </style>
+
+    <color name="stella_background">#0C0D14</color>
+    <color name="stella_surface">#12141F</color>
+    <color name="stella_primary">#00E5A3</color>
+    <color name="stella_secondary">#00F0FF</color>
+    <color name="stella_tertiary">#8D80F0</color>
+    <color name="stella_text_primary">#F4F6F8</color>
+    <color name="stella_text_secondary">#8A93A6</color>
+    <color name="stella_bubble_user">#13141E</color>
+    <color name="stella_bubble_stella">#12141F</color>
+    <color name="stella_border">#1E2233</color>
+</resources>

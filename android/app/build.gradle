@@ -1,0 +1,75 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android' version '1.9.22'
+    id 'com.facebook.react'
+}
+
+android {
+    namespace = 'com.stellamobile.app'
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId 'com.stellamobile.app'
+        minSdk = 24
+        targetSdk = 34
+        versionCode 1
+        versionName '1.0.0'
+
+        vectorDrawables {
+            useSupportLibrary true
+        }
+
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file('debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+        excludes += [
+            '**/libcppcore.so',
+            '**/libfbjni.so',
+        ]
+    }
+}
+
+react {
+    autolinkLibrariesWithApp()
+}
+
+dependencies {
+    implementation 'com.facebook.react:react-android'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.activity:activity:1.8.2'
+}

@@ -1,0 +1,11 @@
+{
+  "name": "StellaMobile",
+  "displayName": "Stella Mobile",
+  "version": "1.0.0",
+  "description": "Stella AI — local-first mobile assistant with dual-model (upstream + mbuzai) inference",
+  "main": "index.js",
+  "android": {
+    "package": "com.stellamobile.app",
+    "versionCode": 1
+  }
+}

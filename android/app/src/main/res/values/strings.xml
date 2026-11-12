@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Stella Mobile</string>
+    <string name="stella_backend_channel">stella_backend_channel</string>
+</resources>

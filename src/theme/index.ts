@@ -1,0 +1,183 @@
+/**
+ * Stella Mobile Theme
+ * Mirrored from stella/themes.json — single source of truth for all surfaces.
+ * Supports mobile + tablet sizing via responsive breakpoints.
+ */
+
+export const STELLA_THEMES = {
+  void: {
+    id: 'void',
+    name: 'Void',
+    mode: 'dark',
+    tokens: {
+      bg: '#0C0D14',
+      surface: '#12141F',
+      'surface-raised': '#161926',
+      glass: 'rgba(18, 20, 31, 0.72)',
+      'glass-border': 'rgba(255, 255, 255, 0.08)',
+      'text-primary': '#F4F6F8',
+      'text-secondary': '#8A93A6',
+      'text-muted': '#7E879B',
+      border: '#1E2233',
+      'border-strong': '#5C637A',
+      primary: '#00E5A3',
+      'on-primary': '#020305',
+      secondary: '#00F0FF',
+      'on-secondary': '#020305',
+      tertiary: '#8D80F0',
+      'on-tertiary': '#020305',
+      success: '#00E5A3',
+      'on-success': '#020305',
+      warning: '#FFB300',
+      'on-warning': '#020305',
+      error: '#FF6B6B',
+      'on-error': '#020305',
+      'focus-ring': '#00F0FF',
+      'bubble-user': '#13141E',
+      'bubble-stella': 'rgba(18, 20, 30, 0.75)',
+      'bubble-user-text': '#F4F6F8',
+      'bubble-stella-text': '#F4F6F8',
+      'button-content': '#020305',
+      'button-content-disabled': '#5C6478',
+      scrim: 'rgba(2, 3, 5, 0.55)',
+      glow: '0 0 16px rgba(0, 240, 255, 0.35)',
+      'elevation-shadow': '0 8px 32px rgba(0, 0, 0, 0.60)',
+    },
+  },
+  oled: {
+    id: 'oled',
+    name: 'OLED True Black',
+    mode: 'dark',
+    tokens: {
+      bg: '#000000',
+      surface: '#0A0A0C',
+      'surface-raised': '#121215',
+      glass: 'rgba(10, 10, 12, 0.85)',
+      'glass-border': 'rgba(255, 255, 255, 0.10)',
+      'text-primary': '#F4F6F8',
+      'text-secondary': '#8A93A6',
+      'text-muted': '#7E879B',
+      border: '#1A1A1E',
+      'border-strong': '#5C637A',
+      primary: '#00E5A3',
+      'on-primary': '#020305',
+      secondary: '#00F0FF',
+      'on-secondary': '#020305',
+      tertiary: '#8D80F0',
+      'on-tertiary': '#020305',
+      success: '#00E5A3',
+      'on-success': '#020305',
+      warning: '#FFB300',
+      'on-warning': '#020305',
+      error: '#FF6B6B',
+      'on-error': '#020305',
+      'focus-ring': '#00F0FF',
+      'bubble-user': '#1B1836',
+      'bubble-stella': 'rgba(20, 18, 42, 0.80)',
+      'bubble-user-text': '#F2F0FF',
+      'bubble-stella-text': '#F2F0FF',
+      'button-content': '#FFFFFF',
+      'button-content-disabled': '#6A648F',
+      scrim: 'rgba(6, 4, 16, 0.60)',
+      glow: '0 0 16px rgba(141, 128, 240, 0.35)',
+      'elevation-shadow': '0 8px 32px rgba(4, 2, 14, 0.65)',
+    },
+  },
+  light: {
+    id: 'light',
+    name: 'Light',
+    mode: 'light',
+    tokens: {
+      bg: '#F4F7F5',
+      surface: '#FFFFFF',
+      'surface-raised': '#EAF1EE',
+      glass: 'rgba(255, 255, 255, 0.75)',
+      'glass-border': 'rgba(12, 13, 20, 0.08)',
+      'text-primary': '#0C0D14',
+      'text-secondary': '#46544D',
+      'text-muted': '#5E6B64',
+      border: '#C7D2CC',
+      'border-strong': '#7E8783',
+      primary: '#007A57',
+      'on-primary': '#FFFFFF',
+      secondary: '#007C8A',
+      'on-secondary': '#FFFFFF',
+      tertiary: '#5A4BD1',
+      'on-tertiary': '#FFFFFF',
+      success: '#0F7B4F',
+      'on-success': '#FFFFFF',
+      warning: '#8A5A00',
+      'on-warning': '#FFFFFF',
+      error: '#B3261E',
+      'on-error': '#FFFFFF',
+      'focus-ring': '#007A57',
+      'bubble-user': '#E7F6F1',
+      'bubble-stella': '#FFFFFF',
+      'bubble-user-text': '#0C0D14',
+      'bubble-stella-text': '#0C0D14',
+      'button-content': '#FFFFFF',
+      'button-content-disabled': '#8A9490',
+      scrim: 'rgba(12, 13, 20, 0.40)',
+      glow: 'none',
+      'elevation-shadow': '0 2px 8px rgba(12, 13, 20, 0.10)',
+    },
+  },
+  solar: {
+    id: 'solar',
+    name: 'Solar Flare',
+    mode: 'dark',
+    tokens: {
+      bg: '#180c04',
+      surface: '#1f1206',
+      'surface-raised': '#2a1808',
+      glass: 'rgba(31, 18, 6, 0.75)',
+      'glass-border': 'rgba(251, 191, 36, 0.22)',
+      'text-primary': '#fff8e7',
+      'text-secondary': '#fb923c',
+      'text-muted': '#d97706',
+      border: '#431407',
+      'border-strong': '#fb923c',
+      primary: '#fbbf24',
+      'on-primary': '#180c04',
+      secondary: '#fb8500',
+      'on-secondary': '#180c04',
+      tertiary: '#ef4444',
+      'on-tertiary': '#fff8e7',
+      success: '#10b981',
+      'on-success': '#180c04',
+      warning: '#fbbf24',
+      'on-warning': '#180c04',
+      error: '#ef4444',
+      'on-error': '#fff8e7',
+      'focus-ring': '#fbbf24',
+      'bubble-user': '#2a1808',
+      'bubble-stella': 'rgba(31, 18, 6, 0.80)',
+      'bubble-user-text': '#fff8e7',
+      'bubble-stella-text': '#fff8e7',
+      'button-content': '#180c04',
+      'button-content-disabled': '#d97706',
+      scrim: 'rgba(24, 12, 4, 0.60)',
+      glow: '0 0 16px rgba(251, 191, 36, 0.35)',
+      'elevation-shadow': '0 8px 32px rgba(4, 2, 1, 0.65)',
+    },
+  },
+} as const
+
+export type StellaThemeId = keyof typeof STELLA_THEMES
+export type StellaTokens = (typeof STELLA_THEMES)['void']['tokens']
+
+export const DEFAULT_THEME: StellaThemeId = 'void'
+
+export function getTheme(themeId: StellaThemeId = DEFAULT_THEME) {
+  return STELLA_THEMES[themeId] ?? STELLA_THEMES[DEFAULT_THEME]
+}
+
+// Mobile / tablet responsive helpers
+export const IS_TABLET = (width: number) => width >= 600
+export const MOBILE_BREAKPOINT = 600
+
+// Chat bubble max widths by device class
+export const CHAT_BUBBLE_MAX_WIDTH = {
+  mobile: 0.85, // 85% of screen width on phone
+  tablet: 0.60, // 60% of screen width on tablet
+}
