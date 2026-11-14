@@ -1,0 +1,62 @@
+# Stella Mobile — Git Ignore
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+keystore.properties
+*.keystore
+*.jks
+*.p12
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# React Native / Metro
+.metro-health-check*
+*.jsbundle
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/app/release/
+android/local.properties
+android/.cxx/
+android/captures/
+*.apk
+*.aab
+*.apks
+
+# iOS
+ios/Pods/
+ios/build/
+*.xcuserstate
+
+# Build outputs
+release/
+sourcemaps/
+assets/models/*.gguf
+assets/models/*.pte
+assets/models/*.onnx
+assets/anatomy-kit/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/

@@ -1,10 +1,10 @@
-/**
- * Stella Mobile — App.tsx
+﻿/**
+ * Stella Mobile â€” App.tsx
  * Root navigator with all Stella functionality.
  * Maps, Device, Media screens load as modals.
  */
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, useEffect, createContext, useContext } from 'react'
 import {
   View, Text, TouchableOpacity, SafeAreaView, StatusBar, Dimensions, ScrollView,
   Modal, FlatList,
@@ -13,15 +13,21 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createDrawerNavigator } from '@react-navigation/drawer'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
-import ChatScreen from './screens/ChatScreen'
-import SettingsScreen from './screens/SettingsScreen'
-import ModelsScreen from './screens/ModelsScreen'
-import RouterScreen from './screens/RouterScreen'
-import MapsScreen from './screens/MapsScreen'
-import DeviceConnectScreen from './screens/DeviceConnectScreen'
-import DeviceAssistantHUD from './components/device/DeviceAssistantHUD'
-import Anatomy3DModal from './components/anatomy/Anatomy3DModal'
-import { getTheme, type StellaThemeId } from './theme/index'
+import ChatScreen from './src/screens/ChatScreen'
+import SettingsScreen from './src/screens/SettingsScreen'
+import ModelsScreen from './src/screens/ModelsScreen'
+import RouterScreen from './src/screens/RouterScreen'
+import MapsScreen from './src/screens/MapsScreen'
+import DeviceConnectScreen from './src/screens/DeviceConnectScreen'
+import DeviceAssistantHUD from './src/components/device/DeviceAssistantHUD'
+import Anatomy3DModal from './src/components/anatomy/Anatomy3DModal'
+import MediaScreen from './src/screens/MediaScreen'
+import { getTheme, type StellaThemeId } from './src/theme/index'
+import { StellaStorage } from './src/core/storage'
+import { DEFAULT_SETTINGS, type AppSettings } from './src/core/types'
+import { chat } from './src/services/chat'
+import { voiceService } from './src/services/voice'
+import { modelRouter } from './src/services/model-router'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 const IS_TABLET = SCREEN_WIDTH >= 600
@@ -29,10 +35,37 @@ const IS_TABLET = SCREEN_WIDTH >= 600
 const Drawer = createDrawerNavigator()
 const Stack = createNativeStackNavigator()
 
-function DrawerContent({
-  themeId,
-  setThemeId,
-}: { themeId: StellaThemeId; setThemeId: (id: StellaThemeId) => void }) {
+interface AppContextType {
+  themeId: StellaThemeId
+  setThemeId: (id: StellaThemeId) => void
+  settings: AppSettings | null
+  activeConversationId: string | null
+  setActiveConversationId: (id: string | null) => void
+  showMedia: boolean
+  setShowMedia: (v: boolean) => void
+  showMaps: boolean
+  setShowMaps: (v: boolean) => void
+  showDevice: boolean
+  setShowDevice: (v: boolean) => void
+  showDeviceAssistant: boolean
+  setShowDeviceAssistant: (v: boolean) => void
+  showAnatomyModal: boolean
+  setShowAnatomyModal: (v: boolean) => void
+  activeAnatomyModel: any
+  setActiveAnatomyModel: (model: any) => void
+  sendDeviceAssistantMessage: (text: string, files?: string[]) => Promise<void>
+}
+
+const AppContext = createContext<AppContextType | null>(null)
+
+function useApp(): AppContextType {
+  const ctx = useContext(AppContext)
+  if (!ctx) throw new Error('useApp must be used within AppProvider')
+  return ctx
+}
+
+function DrawerContent() {
+  const { themeId, setThemeId } = useApp()
   const tokens = getTheme(themeId).tokens
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: tokens.surface, width: IS_TABLET ? 320 : '80%' }}>
@@ -74,72 +107,92 @@ function DrawerContent({
 }
 
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: tokens.bg }}>
-      <StatusBar barStyle={themeId === 'light' ? 'dark' : 'light'} backgroundColor={tokens.bg} />
+function AppProvider({ children }: { children: React.ReactNode }) {
+  const [themeId, setThemeId] = useState<StellaThemeId>('void')
+  const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
+  const [showMedia, setShowMedia] = useState(false)
+  const [showMaps, setShowMaps] = useState(false)
+  const [showDevice, setShowDevice] = useState(false)
+  const [showDeviceAssistant, setShowDeviceAssistant] = useState(false)
+  const [showAnatomyModal, setShowAnatomyModal] = useState(false)
+  const [activeAnatomyModel, setActiveAnatomyModel] = useState<any>(null)
 
-      {/* Modal: Maps */}
-      <Modal visible={showMaps} onRequestClose={() => setShowMaps(false)} transparent>
-        <MapsScreen onClose={() => setShowMaps(false)} />
-      </Modal>
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const saved = await StellaStorage.getSettings()
+        setSettings(saved || DEFAULT_SETTINGS)
+      } catch (e) {
+        console.error('[App] Failed to load settings', e)
+        setSettings(DEFAULT_SETTINGS)
+      }
+    }
+    loadSettings()
+  }, [])
 
-      {/* Modal: Device Connect */}
-      <Modal visible={showDevice} onRequestClose={() => setShowDevice(false)} transparent>
-        <DeviceConnectScreen onClose={() => setShowDevice(false)} />
-      </Modal>
+  const sendDeviceAssistantMessage = useCallback(async (text: string, files?: string[]) => {
+    try {
+      setShowDeviceAssistant(false)
+      if (!text.trim() && (!files || files.length === 0)) return
 
-      {/* Modal: Media */}
-      <Modal visible={showMedia} onRequestClose={() => setShowMedia(false)} transparent>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} />
-      </Modal>
+      let conversationId = activeConversationId
+      if (!conversationId) {
+        const created = chat.createConversation('Device Assistant Chat')
+        conversationId = created.id
+        setActiveConversationId(conversationId)
+      }
 
-      {/* Modal: Device Assistant HUD */}
-      <Modal visible={showDeviceAssistant} onRequestClose={() => setShowDeviceAssistant(false)} transparent>
-        <DeviceAssistantHUD
-          visible={showDeviceAssistant}
-          onClose={() => setShowDeviceAssistant(false)}
-          onSendMessage={async (text: string, files?: string[]) => {
-            setShowDeviceAssistant(false)
-            // Send to chat - will be wired to ChatScreen via state
-            console.log('Stella chat:', text, files)
-          }}
-          themeId={themeId}
-        />
-      </Modal>
+      const selectedModel = settings?.default_engine === 'mbuzai'
+        ? modelRouter.getCatalog().find((m) => m.engine === 'mbuzai')?.id
+        : modelRouter.getCatalog().find((m) => m.engine === 'upstream')?.id
 
-      {/* Modal: Anatomy 3D */}
-      <Modal visible={showAnatomyModal} onRequestClose={() => setShowAnatomyModal(false)} transparent>
-        <Anatomy3DModal
-          visible={showAnatomyModal}
-          onClose={() => setShowAnatomyModal(false)}
-          modelData={activeAnatomyModel}
-          themeId={themeId}
-        />
-      </Modal>
+      if (selectedModel) {
+        chat.addMessage(conversationId, 'user', text, selectedModel, settings?.default_engine || 'upstream')
+        if (files && files.length > 0) {
+          chat.addMessage(conversationId, 'user', `[${files.length} file(s) attached]`, selectedModel, settings?.default_engine || 'upstream')
+        }
+      }
 
+      setActiveConversationId(conversationId)
+    } catch (e: any) {
+      console.error('[App] Device Assistant message failed', e)
+      Alert.alert('Device Assistant', e.message || 'Failed to send message')
+    }
+  }, [activeConversationId, settings])
 
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-            gestureEnabled: IS_TABLET ? false : true,
-          }}
-        >
-          <Stack.Screen name="Root" component={RootStack} />
-          <Stack.Screen name="Settings" component={SettingsScreen} />
-          <Stack.Screen name="Models" component={ModelsScreen} />
-          <Stack.Screen name="Router" component={RouterScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </SafeAreaView>
-  )
+  const value: AppContextType = {
+    themeId,
+    setThemeId,
+    settings,
+    activeConversationId,
+    setActiveConversationId,
+    showMedia,
+    setShowMedia,
+    showMaps,
+    setShowMaps,
+    showDevice,
+    setShowDevice,
+    showDeviceAssistant,
+    setShowDeviceAssistant,
+    showAnatomyModal,
+    setShowAnatomyModal,
+    activeAnatomyModel,
+    setActiveAnatomyModel,
+    sendDeviceAssistantMessage,
+  }
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }
 
 function RootStack() {
+  const { themeId } = useApp()
+  const tokens = getTheme(themeId).tokens
+
   return (
     <Drawer.Navigator
       initialRouteName="Chat"
-      drawerContent={(props) => <DrawerContent themeId={props.themeId as StellaThemeId} setThemeId={props.setThemeId as any} />}
+      drawerContent={() => <DrawerContent />}
       screenOptions={{
         drawerWidth: IS_TABLET ? 320 : '80%',
         drawerType: 'front',
@@ -155,11 +208,75 @@ function RootStack() {
 }
 
 export default function App() {
-  const [themeId, setThemeId] = useState<StellaThemeId>('void')
-  const [showMaps, setShowMaps] = useState(false)
-  const [showDevice, setShowDevice] = useState(false)
-  const [showMedia, setShowMedia] = useState(false)
-  const [showDeviceAssistant, setShowDeviceAssistant] = useState(false)
-  const [showAnatomyModal, setShowAnatomyModal] = useState(false)
-  const [activeAnatomyModel, setActiveAnatomyModel] = useState<any>(null)
-  const tokens = getTheme(themeId).tokens
+  return (
+    <AppProvider>
+      <SafeAreaView style={{ flex: 1 }}>
+        <StatusBar barStyle="light" />
+
+        <Modal
+          transparent
+          visible={useApp().showMedia}
+          onRequestClose={() => useApp().setShowMedia(false)}
+        >
+          <MediaScreen onClose={() => useApp().setShowMedia(false)} />
+        </Modal>
+
+        <Modal
+          transparent
+          visible={useApp().showMaps}
+          onRequestClose={() => useApp().setShowMaps(false)}
+        >
+          <MapsScreen onClose={() => useApp().setShowMaps(false)} />
+        </Modal>
+
+        <Modal
+          transparent
+          visible={useApp().showDevice}
+          onRequestClose={() => useApp().setShowDevice(false)}
+        >
+          <DeviceConnectScreen onClose={() => useApp().setShowDevice(false)} />
+        </Modal>
+
+        <Modal
+          transparent
+          visible={useApp().showDeviceAssistant}
+          onRequestClose={() => useApp().setShowDeviceAssistant(false)}
+        >
+          <DeviceAssistantHUD
+            visible={useApp().showDeviceAssistant}
+            onClose={() => useApp().setShowDeviceAssistant(false)}
+            onSendMessage={useApp().sendDeviceAssistantMessage}
+            themeId={useApp().themeId}
+          />
+        </Modal>
+
+        <Modal
+          transparent
+          visible={useApp().showAnatomyModal}
+          onRequestClose={() => useApp().setShowAnatomyModal(false)}
+        >
+          <Anatomy3DModal
+            visible={useApp().showAnatomyModal}
+            onClose={() => useApp().setShowAnatomyModal(false)}
+            modelData={useApp().activeAnatomyModel}
+            themeId={useApp().themeId}
+          />
+        </Modal>
+
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+              gestureEnabled: IS_TABLET ? false : true,
+            }}
+          >
+            <Stack.Screen name="Root" component={RootStack} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="Models" component={ModelsScreen} />
+            <Stack.Screen name="Router" component={RouterScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SafeAreaView>
+    </AppProvider>
+  )
+}

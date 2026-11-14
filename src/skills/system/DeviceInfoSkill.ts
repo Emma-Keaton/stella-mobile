@@ -1,15 +1,16 @@
 /**
  * Stella Mobile — Device Info Skill Part 1
- * Device, battery, storage info
+ * Device, battery, storage info using native modules
  */
 
-import { Skill, SkillResult, SkillContext, SkillMetadata } from '../core/types';
+import { SkillResult, SkillContext } from '../core/types';
 import { Platform, Dimensions, PixelRatio } from 'react-native';
+import { NativeBridge } from '../../native/bridges';
 
-export const deviceInfoMetadata: SkillMetadata = {
+export const deviceInfoMetadata: any = {
   name: 'device_info',
   aliases: ['device_info', 'system_info', 'device_specs', 'battery_status', 'storage_info', 'system_monitor'],
-  description: 'Get device information including model, OS version, battery status, storage, memory, and system metrics.',
+  description: 'Get device information including model, OS version, battery status, storage, memory, and system metrics using native device APIs.',
   triggers: ['device info', 'system info', 'device specs', 'battery status', 'storage info', 'system monitor', 'what device', 'battery level', 'free space'],
   parameters: {
     type: 'object',
@@ -18,7 +19,7 @@ export const deviceInfoMetadata: SkillMetadata = {
     },
     required: [],
   },
-  version: '1.0.0',
+  version: '2.0.0',
   category: 'system',
   source: 'stella',
   active: true,
@@ -28,35 +29,68 @@ export const deviceInfoMetadata: SkillMetadata = {
 
 const formatBytes = (bytes: number): string => `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 
-export async function getDeviceInfo(): Promise<SkillResult> {
-  const info = {
-    platform: Platform.OS,
-    platformVersion: Platform.Version.toString(),
-    model: 'Unknown',
-    brand: 'Unknown',
-    manufacturer: 'Unknown',
-    deviceId: 'Unknown',
-    appVersion: '1.0.0',
-    buildNumber: '1',
-  };
+export async function getDeviceInfo(): Promise<any> {
+  try {
+    const [deviceId, model, brand, appVersion, buildNumber, systemVersion] = await Promise.all([
+      NativeBridge.deviceInfo.getDeviceId(),
+      NativeBridge.deviceInfo.getModel(),
+      NativeBridge.deviceInfo.getDeviceName(),
+      NativeBridge.deviceInfo.getAppVersion(),
+      NativeBridge.deviceInfo.getBuildNumber(),
+      NativeBridge.deviceInfo.getSystemVersion(),
+    ]);
 
-  const content = `Device: ${info.brand} ${info.model} (${info.platform} ${info.platformVersion})\nApp: v${info.appVersion} (build ${info.buildNumber})\nDevice ID: ${info.deviceId}`;
+    const info = {
+      platform: Platform.OS,
+      platformVersion: systemVersion,
+      model,
+      brand,
+      manufacturer: brand,
+      deviceId,
+      appVersion,
+      buildNumber,
+    };
 
-  return { title: 'Device Info', summary: content, spokenNarrative: `You're using a ${info.platform} device running version ${info.platformVersion}`, operation: 'device', ok: true, record: info };
+    const content = `Device: ${info.brand} ${info.model} (${info.platform} ${info.platformVersion})\nApp: v${info.appVersion} (build ${info.buildNumber})\nDevice ID: ${info.deviceId}`;
+
+    return { title: 'Device Info', summary: content, spokenNarrative: `You're using a ${info.platform} device running version ${info.platformVersion}`, operation: 'device', ok: true, record: info };
+  } catch (error) {
+    return { title: 'Device Info', summary: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`, spokenNarrative: 'Device info error', operation: 'device', ok: false };
+  }
 }
 
-export async function getBatteryInfo(): Promise<SkillResult> {
-  const info = { level: 0.85, isCharging: false, temperature: 25, health: 'Good', technology: 'Li-ion' };
+export async function getBatteryInfo(): Promise<any> {
+  try {
+    const [level, isCharging, health] = await Promise.all([
+      NativeBridge.deviceInfo.getBatteryLevel(),
+      NativeBridge.deviceInfo.isBatteryCharging(),
+      NativeBridge.deviceInfo.getBatteryHealth(),
+    ]);
 
-  const content = `Battery: ${Math.round(info.level * 100)}% ${info.isCharging ? '(Charging)' : ''}\nHealth: ${info.health}, Temp: ${info.temperature}°C`;
+    const info = { level, isCharging, health, technology: 'Li-ion' };
 
-  return { title: 'Battery Status', summary: content, spokenNarrative: `Battery is at ${Math.round(info.level * 100)} percent${info.isCharging ? ' and charging' : ''}`, operation: 'battery', ok: true, record: info };
+    const content = `Battery: ${Math.round(info.level * 100)}% ${info.isCharging ? '(Charging)' : ''}\nHealth: ${info.health}`;
+
+    return { title: 'Battery Status', summary: content, spokenNarrative: `Battery is at ${Math.round(info.level * 100)} percent${info.isCharging ? ' and charging' : ''}`, operation: 'battery', ok: true, record: info };
+  } catch (error) {
+    return { title: 'Battery Status', summary: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`, spokenNarrative: 'Battery info error', operation: 'battery', ok: false };
+  }
 }
 
-export async function getStorageInfo(): Promise<SkillResult> {
-  const info = { total: 128 * 1024 * 1024 * 1024, free: 45 * 1024 * 1024 * 1024, used: 83 * 1024 * 1024 * 1024 };
+export async function getStorageInfo(): Promise<any> {
+  try {
+    const [total, free] = await Promise.all([
+      NativeBridge.deviceInfo.getTotalDiskCapacity(),
+      NativeBridge.deviceInfo.getFreeDiskStorage(),
+    ]);
 
-  const content = `Storage: ${formatBytes(info.free)} free of ${formatBytes(info.total)} (${formatBytes(info.used)} used)`;
+    const used = total - free;
+    const info = { total, free, used };
 
-  return { title: 'Storage Info', summary: content, spokenNarrative: `You have ${formatBytes(info.free)} free of ${formatBytes(info.total)}`, operation: 'storage', ok: true, record: info };
+    const content = `Storage: ${formatBytes(info.free)} free of ${formatBytes(info.total)} (${formatBytes(info.used)} used)`;
+
+    return { title: 'Storage Info', summary: content, spokenNarrative: `You have ${formatBytes(info.free)} free of ${formatBytes(info.total)}`, operation: 'storage', ok: true, record: info };
+  } catch (error) {
+    return { title: 'Storage Info', summary: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`, spokenNarrative: 'Storage info error', operation: 'storage', ok: false };
+  }
 }

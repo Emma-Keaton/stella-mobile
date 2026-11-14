@@ -278,6 +278,47 @@ export const apiClients = {
     rateLimit: '50 requests per hour',
     uses: ['photos', 'images'],
   }, { cacheEnabled: true, cacheTtl: 60 * 60 * 1000 }),
+
+  boredapi: new ApiClient({
+    name: 'Bored API',
+    description: 'Free random activity suggestions',
+    url: 'https://www.boredapi.com/api/activity',
+    docs: 'https://www.boredapi.com/',
+    authTier: 'keyless',
+    rateLimit: 'No strict limit',
+    uses: ['suggest'],
+  }, { cacheEnabled: true, cacheTtl: 60 * 60 * 1000 }),
+
+  // Cloud LLM providers
+  openai: new ApiClient({
+    name: 'OpenAI API',
+    description: 'OpenAI GPT models (GPT-4, GPT-3.5-turbo)',
+    url: 'https://api.openai.com/v1',
+    docs: 'https://platform.openai.com/docs/api-reference',
+    authTier: 'api_key',
+    rateLimit: 'Varies by tier',
+    uses: ['chat', 'completion', 'embeddings'],
+  }, { cacheEnabled: false, timeout: 60000 }),
+
+  anthropic: new ApiClient({
+    name: 'Anthropic API',
+    description: 'Anthropic Claude models (Claude 3 Opus, Sonnet, Haiku)',
+    url: 'https://api.anthropic.com/v1',
+    docs: 'https://docs.anthropic.com/claude/reference',
+    authTier: 'api_key',
+    rateLimit: 'Varies by tier',
+    uses: ['chat', 'completion'],
+  }, { cacheEnabled: false, timeout: 60000 }),
+
+  google: new ApiClient({
+    name: 'Google AI API',
+    description: 'Google Gemini models (Gemini Pro, Gemini Ultra)',
+    url: 'https://generativelanguage.googleapis.com/v1beta',
+    docs: 'https://ai.google.dev/docs',
+    authTier: 'api_key',
+    rateLimit: 'Varies by tier',
+    uses: ['chat', 'completion', 'embeddings'],
+  }, { cacheEnabled: false, timeout: 60000 }),
 };
 
   clearCache(): void {

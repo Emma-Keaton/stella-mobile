@@ -1,0 +1,13 @@
+#!/bin/bash
+# Stella Mobile — Gradle Wrapper
+APP_HOME=$(cd "${BASH_SOURCE[0]%//}" && cd .. && pwd)
+GRADLE_USER_HOME="${GRADLE_USER_HOME:-$HOME/.gradle}"
+WRAPPER_JAR="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
+WRAPPER_PROPERTIES="$APP_HOME/gradle/wrapper/gradle-wrapper.properties"
+
+if [ ! -f "$WRAPPER_JAR" ]; then
+  echo "Gradle wrapper JAR not found. Please run: cd android && curl -L https://services.gradle.org/distributions/gradle-8.4-bin.zip -o /tmp/gradle.zip && unzip /tmp/gradle.zip -d $GRADLE_USER_HOME/wrapper/dists"
+  exit 1
+fi
+
+java -jar "$WRAPPER_JAR" "$@"

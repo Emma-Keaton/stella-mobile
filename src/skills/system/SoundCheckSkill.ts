@@ -1,17 +1,16 @@
 /**
  * Stella Mobile — Sound Check Skill
- * Tests audio output, microphone input, and volume levels
+ * Tests audio output, microphone input, and volume levels using native audio APIs.
  */
 
 import { Skill, SkillResult, SkillContext, SkillMetadata } from '../core/types';
-import { Platform, NativeModules } from 'react-native';
-
-const { AudioSession } = NativeModules;
+import { NativeBridge, NativeBridgeExt } from '../../native/bridges';
+import { PermissionsAndroid, Platform } from 'react-native';
 
 export const soundCheckMetadata: SkillMetadata = {
   name: 'sound_check',
   aliases: ['sound_check', 'audio_test', 'test_speaker', 'test_mic', 'volume_level', 'audio_diagnostics'],
-  description: 'Run a sound check on this device. Tests speaker output, microphone input, and volume levels.',
+  description: 'Run a sound check on this device. Tests speaker output, microphone input, and volume levels using native audio APIs.',
   triggers: ['sound check', 'audio test', 'test speaker', 'test microphone', 'volume level', 'audio diagnostics', 'check audio'],
   parameters: {
     type: 'object',
@@ -21,7 +20,7 @@ export const soundCheckMetadata: SkillMetadata = {
     },
     required: [],
   },
-  version: '1.0.0',
+  version: '2.0.0',
   category: 'system',
   source: 'stella',
   active: true,
@@ -40,63 +39,101 @@ export const soundCheckSkill: Skill = {
       switch (operation) {
         case 'speaker': {
           const result = await testSpeaker(testDuration);
-          return { title: 'Speaker Test', summary: result, spokenNarrative: result, operation: 'speaker', ok: true, record: { test: 'speaker', duration: testDuration, result } };
+          return { title: 'Speaker Test', summary: result, spokenNarrative: result, operation: 'speaker', ok: result.ok, record: { test: 'speaker', duration: testDuration, result } };
         }
         case 'microphone': {
           const result = await testMicrophone(testDuration);
-          return { title: 'Microphone Test', summary: result, spokenNarrative: result, operation: 'microphone', ok: true, record: { test: 'microphone', duration: testDuration, result } };
+          return { title: 'Microphone Test', summary: result.summary, spokenNarrative: result.summary, operation: 'microphone', ok: result.ok, record: { test: 'microphone', duration: testDuration, ...result.record } };
         }
         case 'volume': {
           const result = await getVolumeLevel();
-          return { title: 'Volume Level', summary: result, spokenNarrative: result, operation: 'volume', ok: true, record: { test: 'volume', result } };
+          return { title: 'Volume Level', summary: result.summary, spokenNarrative: result.summary, operation: 'volume', ok: result.ok, record: { test: 'volume', ...result.record } };
         }
         case 'full': {
           const speaker = await testSpeaker(testDuration);
           const mic = await testMicrophone(testDuration);
           const volume = await getVolumeLevel();
-          const content = `Sound Check Complete:\n🔊 Speaker: ${speaker}\n🎤 Microphone: ${mic}\n🔧 Volume: ${volume}`;
-          return { title: 'Sound Check', summary: content, spokenNarrative: `Sound check complete. Speaker ${speaker.includes('OK') ? 'working' : 'has issues'}. Microphone ${mic.includes('OK') ? 'working' : 'has issues'}.`, operation: 'full', ok: true, record: { speaker, microphone: mic, volume } };
+          const allOk = speaker.ok && mic.ok && volume.ok;
+          const content = `Sound Check Complete:\n🔊 Speaker: ${speaker.summary}\n🎤 Microphone: ${mic.summary}\n🔧 Volume: ${volume.summary}`;
+          return { title: 'Sound Check', summary: content, spokenNarrative: `Sound check complete. Speaker ${speaker.ok ? 'working' : 'has issues'}. Microphone ${mic.ok ? 'working' : 'has issues'}.`, operation: 'full', ok: allOk, record: { speaker, microphone: mic, volume } };
         }
         case 'sources': {
-          return { title: 'Sound Check Sources', summary: 'Audio diagnostics using React Native AudioSession and platform audio APIs.', spokenNarrative: 'Sound check uses device audio APIs', operation: 'sources', ok: true, record: { source: 'React Native AudioSession', operations: ['speaker', 'microphone', 'volume', 'full', 'sources'] } };
+          return { title: 'Sound Check Sources', summary: 'Audio diagnostics using native AudioSession (expo-audio-session) and AudioRecorder/Player (expo-av).', spokenNarrative: 'Sound check uses native audio APIs', operation: 'sources', ok: true, record: { source: 'expo-audio-session, expo-av', operations: ['speaker', 'microphone', 'volume', 'full', 'sources'] } };
         }
         default:
           return { title: 'Sound Check', summary: `Unknown operation '${operation}'. Available: speaker, microphone, volume, full, sources`, spokenNarrative: `Unknown sound check operation ${operation}`, operation, ok: false };
       }
-    } catch (error) {
-      return { title: 'Sound Check', summary: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`, spokenNarrative: 'Sound check error', operation, ok: false };
+    } catch (error: any) {
+      return { title: 'Sound Check', summary: `Error: ${error.message || 'Unknown error'}`, spokenNarrative: 'Sound check error', operation, ok: false };
     }
   },
 };
-
 async function testSpeaker(duration: number): Promise<string> {
-  // In a real implementation, this would play a test tone
-  // For now, return a simulated result
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(`OK - Test tone played for ${duration}s (simulated)`);
-    }, 100);
-  });
+  try {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        return '❌ Speaker test failed: Microphone permission required for audio diagnostics';
+      }
+    }
+
+    await NativeBridge.audioSession.configure({
+      mode: 'movie_playback',
+      category: 'playback',
+      options: ['mixWithOthers', 'allowBluetooth'],
+    });
+
+    const testToneUri = 'https://www.soundjay.com/misc/sounds/bell-ringing-05.wav';
+    await NativeBridgeExt.audioPlayer.play(testToneUri, { volume: 0.8 });
+    await new Promise(resolve => setTimeout(resolve, duration * 1000));
+    await NativeBridgeExt.audioPlayer.stop();
+
+    return `✅ OK - Test tone played for ${duration}s via native AudioPlayer`;
+  } catch (error: any) {
+    return `❌ Speaker test failed: ${error.message || 'Unknown error'}`;
+  }
 }
 
 async function testMicrophone(duration: number): Promise<string> {
-  // In a real implementation, this would record and analyze audio
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(`OK - Microphone recorded for ${duration}s (simulated)`);
-    }, 100);
-  });
+  try {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        return '❌ Microphone test failed: Microphone permission required for audio diagnostics';
+      }
+    }
+
+    await NativeBridge.audioSession.configure({
+      mode: 'measurement',
+      category: 'record',
+      options: ['mixWithOthers'],
+    });
+
+    await NativeBridgeExt.audioRecorder.startRecording({
+      sampleRate: 44100,
+      channels: 1,
+      format: 'm4a',
+      maxDuration: duration,
+    });
+    await new Promise(resolve => setTimeout(resolve, duration * 1000));
+    await NativeBridgeExt.audioRecorder.stop();
+
+    return `✅ OK - Microphone recorded for ${duration}s via native AudioRecorder`;
+  } catch (error: any) {
+    return `❌ Microphone test failed: ${error.message || 'Unknown error'}`;
+  }
 }
 
 async function getVolumeLevel(): Promise<string> {
-  // In a real implementation, this would query system volume
-  if (AudioSession) {
-    try {
-      // This would need native module implementation
-      return 'System volume: 75% (simulated)';
-    } catch {
-      return 'Volume: Unable to query (simulated 75%)';
+  try {
+    if (NativeBridge.audioSession && typeof NativeBridge.audioSession.getVolume === 'function') {
+      const level = await NativeBridge.audioSession.getVolume();
+      const max = await NativeBridge.audioSession.getMaxVolume();
+      const percent = Math.round((level / max) * 100);
+      return `System volume: ${percent}%`;
     }
+    return 'Volume: Unable to query - native audio session not available';
+  } catch (error: any) {
+    return `Volume: Unable to query (${error.message || 'Unknown error'})`;
   }
-  return 'Volume: 75% (simulated)';
 }

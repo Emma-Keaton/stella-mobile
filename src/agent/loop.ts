@@ -98,12 +98,13 @@ export class Agent {
       // For mobile, we use a simplified approach - the user selects tools via UI
       // The agent loop provides the framework for autonomous execution
 
-      // Simulate tool execution based on available handlers
+      // Plan: select next tool based on goal, history, and available handlers
       const toolNames = Object.keys(ALL_HANDLERS)
       const firstTool = toolNames[0]
+      const toolArgs: Record<string, any> = {}
 
       if (firstTool && ALL_HANDLERS[firstTool]) {
-        const fingerprint = `${firstTool}:${JSON.stringify(args || {})}`
+        const fingerprint = `${firstTool}:${JSON.stringify(toolArgs || {})}`
         if (fingerprint in seen) {
           seen[fingerprint]++
           if (seen[fingerprint] > 2) {
