@@ -53,6 +53,16 @@ export { outreachSkill, outreachMetadata } from './social/Outreach';
 
 // Security skills
 export { emailIntelligenceSkill, emailIntelligenceMetadata } from './security/EmailIntelligenceSkillEntry';
+export { nmapSkill, nmapMetadata } from './security/nmap';
+export { dracnmapSkill, dracnmapMetadata } from './security/dracnmap';
+export { xerosploitSkill, xerosploitMetadata } from './security/xerosploit';
+export { redHawkSkill, redHawkMetadata } from './security/red_hawk';
+export { reconSpiderSkill, reconSpiderMetadata } from './security/reconspider';
+export { infogaSkill, infogaMetadata } from './security/infoga';
+export { reconDogSkill, reconDogMetadata } from './security/recondog';
+export { strikerSkill, strikerMetadata } from './security/striker';
+export { rang3rSkill, rang3rMetadata } from './security/rang3r';
+export { breacherSkill, breacherMetadata } from './security/breacher';
 
 // Engineering skills (NEW — linked with coding/development)
 export { codeReviewSkill, codeReviewMetadata } from './engineering/code-review';
@@ -90,6 +100,13 @@ export { pricingSkill, pricingMetadata } from './commercial-finance/pricing';
 export { taskMgmtSkill, taskMgmtMetadata } from './daily-productivity/task-mgmt';
 export { meetingPrepSkill, meetingPrepMetadata } from './daily-productivity/meeting-prep';
 export { emailTriageSkill, emailTriageMetadata } from './daily-productivity/email-triage';
+
+// AI/ML skills (NEW — cloud provider APIs)
+export { cloudProviderApiSkillEntry, cloudProviderApiMetadata } from './ai_ml/CloudProviderApiSkillEntry';
+export { CloudProviderApiOperations } from './ai_ml/CloudProviderApiOperations';
+export { CloudProviderFormatters } from './ai_ml/CloudProviderFormatters';
+export { CloudProviderConstants } from './ai_ml/CloudProviderConstants';
+export type { ProviderModel, ProviderInfo, BillingInfo, SDKGuides } from './ai_ml/CloudProviderConstants';
 
 // Re-export all skill types
 export type { Skill, SkillMetadata, SkillResult, SkillContext, SkillManifest } from './core/types';

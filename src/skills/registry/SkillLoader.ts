@@ -16,7 +16,20 @@ import { activitySuggesterSkill, habitTrackerSkill, writingSkill } from '../prod
 import { spaceFactsSkill, webSearchSkill, leadFinderSkill } from '../research'
 import { outreachSkill } from '../social'
 import { gifSearchSkill, mediaStreamSkill } from '../media'
-import { emailIntelligenceSkill } from '../security'
+import { emailIntelligenceSkill } from '../security/EmailIntelligenceSkillEntry'
+import { nmapSkill } from '../security/nmap'
+import { dracnmapSkill } from '../security/dracnmap'
+import { xerosploitSkill } from '../security/xerosploit'
+import { redHawkSkill } from '../security/red_hawk'
+import { reconSpiderSkill } from '../security/reconspider'
+import { infogaSkill } from '../security/infoga'
+import { reconDogSkill } from '../security/recondog'
+import { strikerSkill } from '../security/striker'
+import { rang3rSkill } from '../security/rang3r'
+import { breacherSkill } from '../security/breacher'
+
+// Import AI/ML skills (NEW — cloud provider APIs)
+import { cloudProviderApiSkillEntry } from '../ai_ml'
 
 // Import Engineering skills (NEW — linked with coding/development)
 import { codeReviewSkill } from '../engineering/code-review'
@@ -81,6 +94,19 @@ const allSkills: Skill[] = [
   gifSearchSkill,
   mediaStreamSkill,
   emailIntelligenceSkill,
+  nmapSkill,
+  dracnmapSkill,
+  xerosploitSkill,
+  redHawkSkill,
+  reconSpiderSkill,
+  infogaSkill,
+  reconDogSkill,
+  strikerSkill,
+  rang3rSkill,
+  breacherSkill,
+
+  // AI/ML (NEW)
+  cloudProviderApiSkillEntry,
 
   // Engineering (NEW)
   codeReviewSkill,

@@ -1,0 +1,14 @@
+{
+  "cline": {
+    "typescript": { "installation": "npm install @cline/bot", "basic": "import { ClineAPI } from '@cline/bot'; const cline = new ClineAPI({ apiKey: process.env.CLINE_API_KEY }); const task = await cline.createTask({ prompt: 'Build a React component' });", "streaming": "Cline handles streaming internally via the VS Code extension", "tools": "Cline provides built-in tools: file read/write, terminal, browser, search, etc." },
+    "python": { "installation": "pip install cline-bot", "basic": "from cline_bot import ClineAPI; cline = ClineAPI(api_key=os.environ.get('CLINE_API_KEY')); task = cline.create_task(prompt='Build a React component');", "streaming": "Cline handles streaming internally via the VS Code extension", "tools": "Cline provides built-in tools: file read/write, terminal, browser, search, etc." }
+  },
+  "opencode": {
+    "go": { "installation": "go install github.com/opencode-ai/opencode/cmd/opencode@latest", "basic": "opencode run 'Build a REST API'; opencode chat 'Explain this code';", "streaming": "OpenCode streams responses by default in CLI", "tools": "Built-in tools: file ops, git, terminal, search, lsp" },
+    "typescript": { "installation": "npm install @opencode-ai/sdk", "basic": "import { OpenCode } from '@opencode-ai/sdk'; const opencode = new OpenCode({ mode: 'zen' }); await opencode.run('Build a React app');", "streaming": "OpenCode Zen streams autonomously", "tools": "Full file system, terminal, git, browser access" }
+  },
+  "nvidia": {
+    "python": { "installation": "pip install nvidia-nim", "basic": "from nvidia_nim import NIMClient; client = NIMClient(api_key=os.environ.get('NVIDIA_API_KEY')); response = client.chat.completions.create(model='nvidia/llama-3.1-70b-instruct', messages=[{'role': 'user', 'content': 'Hello!'}]);", "streaming": "stream = client.chat.completions.create(model='nvidia/llama-3.1-70b-instruct', messages=[{'role': 'user', 'content': 'Tell a story'}], stream=True); for chunk in stream: print(chunk.choices[0].delta.content or '', end='', flush=True)", "tools": "NIM supports function calling on select models" },
+    "typescript": { "installation": "npm install @nvidia/nim-client", "basic": "import { NIMClient } from '@nvidia/nim-client'; const client = new NIMClient({ apiKey: process.env.NVIDIA_API_KEY }); const response = await client.chat.completions.create({ model: 'nvidia/llama-3.1-70b-instruct', messages: [{ role: 'user', content: 'Hello!' }] });", "streaming": "const stream = await client.chat.completions.create({ model: 'nvidia/llama-3.1-70b-instruct', messages: [{ role: 'user', 'content': 'Tell a story' }], stream: true }); for await (const chunk of stream) { process.stdout.write(chunk.choices[0]?.delta?.content || ''); }", "tools": "NIM supports function calling on select models" }
+  }
+}

@@ -3,12 +3,13 @@
  * Mirrors anything-llm mobile's scripts/buildAndroidRelease.js
  *
  * Steps:
- * 1. Clean gradle build
- * 2. Build AAB bundle (release)
- * 3. Save JS sourcemap for Crashlytics
- * 4. Use bundletool to extract universal APK from AAB
- * 5. Sign APK with upload keystore
- * 6. Output to release/v<version>/ (.aab + .apk + version.txt)
+ * 1. Preflight validation (env, keystore, gradle, signing config)
+ * 2. Clean gradle build
+ * 3. Build AAB bundle (release)
+ * 4. Save JS sourcemap for Crashlytics
+ * 5. Use bundletool to extract universal APK from AAB
+ * 6. Sign APK with upload keystore
+ * 7. Output to release/v<version>/ (.aab + .apk + version.txt)
  */
 
 const { execSync } = require('child_process')
@@ -70,8 +71,165 @@ function getJavaCommand() {
   }
   return 'java'
 }
+/**
+ * PREFLIGHT VALIDATION
+ * Fails fast if any required configuration is missing or invalid.
+ */
+function runPreflightChecks() {
+  console.log('\n🔍 Running preflight checks...\n')
+  let hasErrors = false
+
+  // 1. Required environment variables
+  const requiredEnvVars = [
+    'APP_RELEASE_STORE_PASSWORD',
+    'APP_RELEASE_KEY_PASSWORD',
+    'KEY_ALIAS',
+  ]
+  const optionalEnvVars = ['STORE_FILE']
+
+  console.log('  Checking environment variables...')
+  for (const envVar of requiredEnvVars) {
+    const value = process.env[envVar]
+    if (!value || value.trim() === '') {
+      console.error(`    ❌ Missing required env var: ${envVar}`)
+      hasErrors = true
+    } else if (value.includes('CHANGE_ME') || value.includes('placeholder') || value === 'your_password_here') {
+      console.error(`    ❌ Placeholder detected in ${envVar} — replace with real value`)
+      hasErrors = true
+    } else {
+      console.log(`    ✅ ${envVar} is set`)
+    }
+  }
+  for (const envVar of optionalEnvVars) {
+    if (process.env[envVar]) {
+      console.log(`    ✅ ${envVar} is set (optional)`)
+    } else {
+      console.log(`    ℹ️  ${envVar} not set (optional, will use default)`)
+    }
+  }
+
+  // 2. Keystore file exists and is readable
+  const keystorePath = process.env.STORE_FILE || 'android/app/stella-mobile-upload-key.keystore'
+  console.log('\n  Checking keystore...')
+  if (!fs.existsSync(keystorePath)) {
+    console.error(`    ❌ Keystore not found at: ${keystorePath}`)
+    hasErrors = true
+  } else {
+    try {
+      fs.accessSync(keystorePath, fs.constants.R_OK)
+      const stats = fs.statSync(keystorePath)
+      if (stats.size === 0) {
+        console.error(`    ❌ Keystore file is empty: ${keystorePath}`)
+        hasErrors = true
+      } else {
+        console.log(`    ✅ Keystore found and readable (${stats.size} bytes)`)
+      }
+    } catch (e) {
+      console.error(`    ❌ Keystore not readable: ${e.message}`)
+      hasErrors = true
+    }
+  }
+
+  // 3. gradlew exists and is executable
+  const gradlewPath = isWindows ? 'android\\gradlew.bat' : 'android/gradlew'
+  console.log('\n  Checking Gradle wrapper...')
+  if (!fs.existsSync(gradlewPath)) {
+    console.error(`    ❌ Gradle wrapper not found at: ${gradlewPath}`)
+    hasErrors = true
+  } else {
+    if (!isWindows) {
+      try {
+        fs.accessSync(gradlewPath, fs.constants.X_OK)
+        console.log(`    ✅ gradlew is executable`)
+      } catch (e) {
+        console.error(`    ❌ gradlew is not executable (run: chmod +x android/gradlew)`)
+        hasErrors = true
+      }
+    } else {
+      console.log(`    ✅ gradlew.bat found`)
+    }
+  }
+
+  // 4. android/app/build.gradle has release signing config + minifyEnabled true
+  const buildGradlePath = 'android/app/build.gradle'
+  console.log('\n  Checking build.gradle signing config...')
+  if (!fs.existsSync(buildGradlePath)) {
+    console.error(`    ❌ build.gradle not found at: ${buildGradlePath}`)
+    hasErrors = true
+  } else {
+    const gradleContent = fs.readFileSync(buildGradlePath, 'utf8')
+    const checks = [
+      { pattern: /signingConfigs\s*\{[\s\S]*?release\s*\{/, desc: 'release signingConfig block' },
+      { pattern: /storeFile\s+file\(/, desc: 'keystore storeFile reference' },
+      { pattern: /storePassword/, desc: 'storePassword configuration' },
+      { pattern: /keyAlias/, desc: 'keyAlias configuration' },
+      { pattern: /keyPassword/, desc: 'keyPassword configuration' },
+      { pattern: /buildTypes\s*\{[\s\S]*?release\s*\{[\s\S]*?signingConfig\s+signingConfigs\.release/, desc: 'release buildType uses signingConfigs.release' },
+      { pattern: /minifyEnabled\s+true/, desc: 'minifyEnabled true' },
+      { pattern: /proguardFiles.*proguard-rules\.pro/, desc: 'proguard-rules.pro referenced' },
+    ]
+    for (const check of checks) {
+      if (check.pattern.test(gradleContent)) {
+        console.log(`    ✅ ${check.desc}`)
+      } else {
+        console.error(`    ❌ Missing: ${check.desc}`)
+        hasErrors = true
+      }
+    }
+  }
+
+  // 5. No placeholder secrets in keystore.properties (if it exists)
+  const keystorePropsPath = 'android/keystore.properties'
+  console.log('\n  Checking keystore.properties for placeholders...')
+  if (fs.existsSync(keystorePropsPath)) {
+    const propsContent = fs.readFileSync(keystorePropsPath, 'utf8')
+    const placeholderPatterns = [
+      /CHANGE_ME/i,
+      /placeholder/i,
+      /your_.*_here/i,
+      /^STORE_PASSWORD\s*=\s*$/m,
+      /^KEY_PASSWORD\s*=\s*$/m,
+    ]
+    let foundPlaceholder = false
+    for (const pattern of placeholderPatterns) {
+      if (pattern.test(propsContent)) {
+        console.error(`    ❌ Placeholder detected in keystore.properties`)
+        foundPlaceholder = true
+        hasErrors = true
+        break
+      }
+    }
+    if (!foundPlaceholder) {
+      console.log(`    ✅ No placeholders in keystore.properties`)
+    }
+  } else {
+    console.log(`    ℹ️  keystore.properties not found (using env vars)`)
+  }
+
+  // 6. bundletool exists
+  const bundletoolPath = 'scripts/bundletool-1.18.1.jar'
+  console.log('\n  Checking bundletool...')
+  if (!fs.existsSync(bundletoolPath)) {
+    console.error(`    ❌ bundletool not found at: ${bundletoolPath}`)
+    hasErrors = true
+  } else {
+    console.log(`    ✅ bundletool found`)
+  }
+
+  console.log('') // blank line
+
+  if (hasErrors) {
+    console.error('❌ Preflight checks FAILED. Fix the issues above before building.')
+    process.exit(1)
+  } else {
+    console.log('✅ All preflight checks passed.\n')
+  }
+}
 
 try {
+  // === PREFLIGHT ===
+  runPreflightChecks()
+
   if (fs.existsSync('release')) fs.rmSync('release', { recursive: true })
 
   console.log('Cleaning the build...')

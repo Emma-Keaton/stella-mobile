@@ -166,12 +166,27 @@ export class ModelDownloader {
       return false
     }
 
+    // Enforce size check
+    if (sttInfo.size !== this.manifest.stt.size) {
+      throw new Error(`STT model size mismatch: expected ${this.manifest.stt.size}, got ${sttInfo.size}`)
+    }
+    if (ttsInfo.size !== this.manifest.tts.size) {
+      throw new Error(`TTS model size mismatch: expected ${this.manifest.tts.size}, got ${ttsInfo.size}`)
+    }
+
     const [sttValid, ttsValid] = await Promise.all([
       this.verifyChecksum(sttPath, this.manifest.stt.sha256),
       this.verifyChecksum(ttsPath, this.manifest.tts.sha256),
     ])
 
-    return sttValid && ttsValid
+    if (!sttValid) {
+      throw new Error('STT model checksum verification failed — file may be corrupted')
+    }
+    if (!ttsValid) {
+      throw new Error('TTS model checksum verification failed — file may be corrupted')
+    }
+
+    return true
   }
 
   async getModelInfo(config: VoiceConfig): Promise<ModelInfo> {
@@ -346,7 +361,7 @@ export class ModelDownloader {
 
   private async verifyChecksum(filePath: string, expectedSha256: string): Promise<boolean> {
     if (expectedSha256.startsWith('TODO:') || expectedSha256.startsWith('PLACEHOLDER')) {
-      return true
+      throw new Error('Model checksum not configured — run `npm run install:models` to download and compute checksums')
     }
 
     try {

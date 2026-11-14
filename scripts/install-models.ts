@@ -61,15 +61,26 @@ function ensureDir(dir: string): void {
   }
 }
 
+// Hugging Face token for gated models (set HF_TOKEN env var)
+const HF_TOKEN = process.env.HF_TOKEN || process.env.HUGGINGFACE_TOKEN
+
 function downloadFile(url: string, destPath: string, onProgress?: (downloaded: number, total: number) => void): Promise<void> {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(destPath)
-    
-    https.get(url, (response) => {
+
+    const isHuggingFace = url.includes('huggingface.co')
+    const headers: Record<string, string> = {}
+    if (isHuggingFace && HF_TOKEN) {
+      headers['Authorization'] = `Bearer ${HF_TOKEN}`
+    }
+
+    const options = { headers }
+    https.get(url, options, (response) => {
       if (response.statusCode !== 200) {
         if (response.headers.location) {
           file.close()
           fs.unlinkSync(destPath)
+          // Pass headers through redirect for Hugging Face
           downloadFile(response.headers.location, destPath, onProgress).then(resolve).catch(reject)
           return
         }
