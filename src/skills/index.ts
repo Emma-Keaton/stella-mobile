@@ -45,12 +45,51 @@ export { writingSkill, writingMetadata } from './productivity/WritingSkillEntry'
 export { spaceFactsSkill, spaceFactsMetadata } from './research/SpaceFactsSkillEntry';
 export { webSearchSkill, webSearchMetadata } from './research/WebSearchSkillEntry';
 export { leadFinderSkill, leadFinderMetadata } from './research/LeadFinder';
+export { marketResearchSkill, marketResearchMetadata } from './research/market-research';
+export { competitiveAnalysisSkill, competitiveAnalysisMetadata } from './research/competitive-analysis';
 
 // Social skills
 export { outreachSkill, outreachMetadata } from './social/Outreach';
 
 // Security skills
 export { emailIntelligenceSkill, emailIntelligenceMetadata } from './security/EmailIntelligenceSkillEntry';
+
+// Engineering skills (NEW — linked with coding/development)
+export { codeReviewSkill, codeReviewMetadata } from './engineering/code-review';
+export { architectureSkill, architectureMetadata } from './engineering/architecture';
+
+// Marketing skills (NEW — linked with outreach & email intelligence)
+export { seoSkill, seoMetadata } from './marketing/seo';
+export { copywritingSkill, copywritingMetadata } from './marketing/copywriting';
+
+// Product skills (NEW)
+export { prdSkill, prdMetadata } from './product/prd';
+export { userStoriesSkill, userStoriesMetadata } from './product/user-stories';
+export { roadmapSkill, roadmapMetadata } from './product/roadmap';
+
+// Compliance skills (NEW)
+export { gdprSkill, gdprMetadata } from './compliance/gdpr';
+export { soc2Skill, soc2Metadata } from './compliance/soc2';
+export { riskSkill, riskMetadata } from './compliance/risk';
+
+// C-Level Advisory skills (NEW)
+export { ceoSkill, ceoMetadata } from './c-level/ceo';
+export { cfoSkill, cfoMetadata } from './c-level/cfo';
+export { ctoSkill, ctoMetadata } from './c-level/cto';
+
+// Business Operations skills (NEW)
+export { sopSkill, sopMetadata } from './business-operations/sop';
+export { okrSkill, okrMetadata } from './business-operations/okr';
+
+// Commercial & Finance skills (NEW — linked with finance)
+export { dcfSkill, dcfMetadata } from './commercial-finance/dcf';
+export { saasMetricsSkill, saasMetricsMetadata } from './commercial-finance/saas-metrics';
+export { pricingSkill, pricingMetadata } from './commercial-finance/pricing';
+
+// Daily Productivity skills (NEW)
+export { taskMgmtSkill, taskMgmtMetadata } from './daily-productivity/task-mgmt';
+export { meetingPrepSkill, meetingPrepMetadata } from './daily-productivity/meeting-prep';
+export { emailTriageSkill, emailTriageMetadata } from './daily-productivity/email-triage';
 
 // Re-export all skill types
 export type { Skill, SkillMetadata, SkillResult, SkillContext, SkillManifest } from './core/types';
